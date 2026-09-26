@@ -478,6 +478,40 @@ Console.WriteLine("========================================");
 Console.WriteLine(" DOM DOMAIN");
 Console.WriteLine("========================================");
 
+dom.SetChildNodes +=
+    (_, @event) =>
+    {
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "DOM EVENT: child nodes set"
+        );
+
+        Console.WriteLine(
+            $"Parent Node ID: {@event.ParentId.Value}"
+        );
+
+        Console.WriteLine(
+            $"Node count: {@event.Nodes.Count}"
+        );
+
+        foreach (Node node in @event.Nodes)
+        {
+            Console.WriteLine(
+                $"  {node.NodeName} " +
+                $"NodeId={node.NodeId.Value} " +
+                $"Children={node.ChildNodeCount}"
+            );
+
+            foreach (DOMAttribute attribute in node.Attributes)
+            {
+                Console.WriteLine(
+                    $"    {attribute.Name} = {attribute.Value}"
+                );
+            }
+        }
+    };
+
 await dom.EnableAsync();
 
 Console.WriteLine(

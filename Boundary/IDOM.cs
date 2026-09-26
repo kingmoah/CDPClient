@@ -28,4 +28,6 @@ public interface IDOM
         NodeId nodeId,
         CancellationToken cancellationToken = default
     );
+
+    event EventHandler<SetChildNodesEvent>? SetChildNodes;
 }

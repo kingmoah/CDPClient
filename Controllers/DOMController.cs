@@ -9,6 +9,8 @@ public sealed class DOMController : IDOM, IDisposable
 {
     private readonly CDPConnection _connection;
 
+    public event EventHandler<SetChildNodesEvent>? SetChildNodes;
+
     public DOMController(CDPConnection connection)
     {
         _connection = connection;
@@ -184,13 +186,19 @@ public sealed class DOMController : IDOM, IDisposable
     }
 
     private static Node ParseNode(
-        JsonElement element)
+    JsonElement element)
     {
         Node node = new()
         {
             NodeId =
                 new NodeId(
                     element.GetProperty("nodeId").GetInt32()
+                ),
+
+            ParentId =
+                GetNodeId(
+                    element,
+                    "parentId"
                 ),
 
             BackendNodeId =
@@ -237,7 +245,16 @@ public sealed class DOMController : IDOM, IDisposable
                 GetString(element, "name"),
 
             Value =
-                GetString(element, "value")
+                GetString(element, "value"),
+
+            ChildNodeCount =
+                GetInt32(
+                    element,
+                    "childNodeCount"
+                ),
+
+            Attributes =
+                ParseAttributes(element)
         };
 
         if (element.TryGetProperty(
@@ -259,6 +276,67 @@ public sealed class DOMController : IDOM, IDisposable
         return node;
     }
 
+    private static NodeId? GetNodeId(
+        JsonElement element,
+        string property)
+    {
+        if (!element.TryGetProperty(
+                property,
+                out JsonElement value))
+        {
+            return null;
+        }
+
+        return new NodeId(
+            value.GetInt32()
+        );
+    }
+
+    private static IReadOnlyList<DOMAttribute> ParseAttributes(
+        JsonElement element)
+    {
+        if (!element.TryGetProperty(
+                "attributes",
+                out JsonElement attributes))
+        {
+            return Array.Empty<DOMAttribute>();
+        }
+
+        List<string> values =
+            attributes
+                .EnumerateArray()
+                .Select(value =>
+                    value.GetString() ?? string.Empty)
+                .ToList();
+
+        List<DOMAttribute> result = new();
+
+        for (int i = 0; i + 1 < values.Count; i += 2)
+        {
+            result.Add(
+                new DOMAttribute(
+                    values[i],
+                    values[i + 1]
+                )
+            );
+        }
+
+        return result;
+    }
+
+    private static int GetInt32(
+        JsonElement element,
+        string property)
+    {
+        if (!element.TryGetProperty(
+                property,
+                out JsonElement value))
+        {
+            return 0;
+        }
+
+        return value.GetInt32();
+    }
     private static string? GetString(
         JsonElement element,
         string property)
@@ -279,8 +357,46 @@ public sealed class DOMController : IDOM, IDisposable
         object? sender,
         CDPEvent @event)
     {
-        // DOM events will be handled here later.
+        if (!@event.Params.HasValue)
+        {
+            return;
+        }
+
+        switch (@event.Method)
+        {
+            case "DOM.setChildNodes":
+                HandleSetChildNodes(
+                    @event.Params.Value
+                );
+                break;
+        }
     }
+
+    private void HandleSetChildNodes(
+    JsonElement parameters)
+{
+    NodeId parentId =
+        new(
+            parameters
+                .GetProperty("parentId")
+                .GetInt32()
+        );
+
+    IReadOnlyList<Node> nodes =
+        parameters
+            .GetProperty("nodes")
+            .EnumerateArray()
+            .Select(ParseNode)
+            .ToArray();
+
+    SetChildNodes?.Invoke(
+        this,
+        new SetChildNodesEvent(
+            parentId,
+            nodes
+        )
+    );
+}
 
     public void Dispose()
     {

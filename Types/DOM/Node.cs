@@ -4,6 +4,8 @@ public sealed record Node
 {
     public NodeId NodeId { get; init; }
 
+    public NodeId? ParentId { get; init; }
+
     public BackendNodeId BackendNodeId { get; init; }
 
     public int NodeType { get; init; }
@@ -29,6 +31,11 @@ public sealed record Node
     public string? Name { get; init; }
 
     public string? Value { get; init; }
+
+    public int ChildNodeCount { get; init; }
+
+    public IReadOnlyList<DOMAttribute> Attributes { get; init; }
+        = Array.Empty<DOMAttribute>();
 
     public IReadOnlyList<Node> Children { get; init; }
         = Array.Empty<Node>();
