@@ -1,6 +1,6 @@
 namespace CDPClient.Types.DOM;
 
-public sealed class Node
+public sealed record Node
 {
     public NodeId NodeId { get; init; }
 

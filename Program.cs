@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using CDPClient.Controllers;
 using CDPClient.Types;
+using CDPClient.Types.DOM;
 using CDPClient.Types.Page;
 using CDPClient.Types.Runtime;
 
@@ -463,6 +464,97 @@ Console.WriteLine(
 );
 
 Console.WriteLine();
+
+// =========================================================
+// DOM DOMAIN TEST
+// =========================================================
+
+using DOMController dom =
+    new(connection);
+
+Console.WriteLine();
+
+Console.WriteLine("========================================");
+Console.WriteLine(" DOM DOMAIN");
+Console.WriteLine("========================================");
+
+await dom.EnableAsync();
+
+Console.WriteLine(
+    "DOM domain enabled."
+);
+
+Document document =
+    await dom.GetDocumentAsync();
+
+Console.WriteLine();
+
+Console.WriteLine(
+    $"Document Node ID: {document.Root.NodeId.Value}"
+);
+
+Console.WriteLine(
+    $"Document Node Name: {document.Root.NodeName}"
+);
+
+Console.WriteLine(
+    $"Child count: {document.Root.Children.Count}"
+);
+
+Node? body =
+    await dom.QuerySelectorAsync(
+        document.Root.NodeId,
+        "body"
+    );
+
+if (body is null)
+{
+    Console.WriteLine(
+        "Body element was not found."
+    );
+}
+else
+{
+    Console.WriteLine();
+
+    Console.WriteLine(
+        $"Body Node ID: {body.NodeId.Value}"
+    );
+
+    string bodyHtml =
+        await dom.GetOuterHTMLAsync(
+            body.NodeId
+        );
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        "BODY HTML:"
+    );
+
+    Console.WriteLine(
+        bodyHtml
+    );
+}
+
+IReadOnlyList<Node> links =
+    await dom.QuerySelectorAllAsync(
+        document.Root.NodeId,
+        "a"
+    );
+
+Console.WriteLine();
+
+Console.WriteLine(
+    $"Found {links.Count} link(s)."
+);
+
+foreach (Node link in links)
+{
+    Console.WriteLine(
+        $"Link Node ID: {link.NodeId.Value}"
+    );
+}
 
 while (true)
 {
